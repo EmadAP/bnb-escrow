@@ -1,20 +1,57 @@
+# Dependencies
+
+node_modules/
+
+# Build output
+
+dist/
+dist-ssr/
+
+# Local environment files
+
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
 # Foundry
+
 escrow/cache/
 escrow/out/
 
-# Commonly ignored directories
-.logs/
-.ignore/
+# Foundry broadcast logs
 
-# Development broadcast logs
 !/escrow/broadcast/
 escrow/broadcast/*/31337/
 escrow/broadcast/**/dry-run/
 
-# Docs
-docs/
+# Commonly ignored directories
 
-# Environment
-.env
-.env.*
-!.env.example
+.logs/
+.ignore/
+
+# Editor directories and files
+
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Documentation
+
+docs/

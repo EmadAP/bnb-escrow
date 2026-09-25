@@ -1,8 +1,10 @@
-import Container from "./components/shared/Container";
+import Container from "./components/Container";
+import Navbar from "./components/Navbar";
 
 function App() {
   return (
     <main className="min-h-svh w-full">
+      <Navbar />
       <Container className="min-h-svh">App</Container>
     </main>
   );

@@ -1,38 +1,22 @@
-import { useState } from "react";
+import { useAppStore } from "@/stores/app-store";
 
 import Container from "./components/Container";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
-
-type AppView = "home" | "create" | "transaction" | "escrow";
+import CreateEscrow from "./components/CreateEscrow";
 
 function App() {
-  const [view, setView] = useState<AppView>("home");
-
-  function handleOpenEscrow(escrowId: string) {
-    console.log("Open escrow:", escrowId);
-    setView("escrow");
-  }
+  const view = useAppStore((state) => state.view);
+  const setView = useAppStore((state) => state.setView);
 
   return (
     <main className="min-h-svh w-full">
       <Navbar />
 
       <Container>
-        {view === "home" && (
-          <Hero
-            onCreateEscrow={() => setView("create")}
-            onOpenEscrow={handleOpenEscrow}
-          />
-        )}
+        {view === "home" && <Hero />}
 
-        {view === "create" && (
-          <section>
-            <h2>Create Escrow</h2>
-
-            <button onClick={() => setView("transaction")}>Continue</button>
-          </section>
-        )}
+        {view === "create" && <CreateEscrow />}
 
         {view === "transaction" && (
           <section>

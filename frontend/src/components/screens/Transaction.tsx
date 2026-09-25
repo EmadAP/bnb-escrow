@@ -30,12 +30,12 @@ function Transaction() {
           </div>
 
           <div className="space-y-4">
-            <div className="border p-4">
+            <div className="">
               <p className="text-sm text-muted-foreground">Escrow ID</p>
               <p className="mt-1 text-lg font-semibold">#{escrowId ?? "—"}</p>
             </div>
 
-            <div className="border p-4">
+            <div className="border-b pb-6 ">
               <p className="text-sm text-muted-foreground">Transaction hash</p>
 
               <p className="mt-1 break-all font-mono text-sm">

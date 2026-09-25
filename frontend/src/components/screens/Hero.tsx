@@ -4,12 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount } from "wagmi";
 
 import { Button } from "@/components/ui/button";
-import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 import { useAppStore } from "@/stores/app-store";
 import {
   openEscrowSchema,
   type OpenEscrowInput,
 } from "@/lib/validation/escrow";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "../ui/input-group";
 
 function Hero() {
   const { isConnected } = useAccount();
@@ -93,7 +97,7 @@ function Hero() {
         </div>
 
         <div className="mx-auto mt-14 grid max-w-2xl gap-4 text-left sm:grid-cols-3">
-          <div className="rounded-xl border bg-card p-5">
+          <div className="border bg-card p-5">
             <h3 className="font-semibold">Buyer protected</h3>
 
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -101,7 +105,7 @@ function Hero() {
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card p-5">
+          <div className="border bg-card p-5">
             <h3 className="font-semibold">On-chain</h3>
 
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -109,7 +113,7 @@ function Hero() {
             </p>
           </div>
 
-          <div className="rounded-xl border bg-card p-5">
+          <div className="border bg-card p-5">
             <h3 className="font-semibold">Dispute resolution</h3>
 
             <p className="mt-2 text-sm leading-6 text-muted-foreground">

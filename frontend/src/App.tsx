@@ -2,13 +2,13 @@ import { useAppStore } from "@/stores/app-store";
 
 import Container from "./components/Container";
 import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import CreateEscrow from "./components/CreateEscrow";
-import Transaction from "./components/Transaction";
+import CreateEscrow from "./components/screens/CreateEscrow";
+import Transaction from "./components/screens/Transaction";
+import Escrow from "./components/screens/Escrow";
+import Hero from "./components/screens/Hero";
 
 function App() {
   const view = useAppStore((state) => state.view);
-  const setView = useAppStore((state) => state.setView);
 
   return (
     <main className="min-h-svh w-full">
@@ -21,13 +21,7 @@ function App() {
 
         {view === "transaction" && <Transaction />}
 
-        {view === "escrow" && (
-          <section>
-            <h2>Escrow</h2>
-
-            <button onClick={() => setView("home")}>Back to Home</button>
-          </section>
-        )}
+        {view === "escrow" && <Escrow />}
       </Container>
     </main>
   );

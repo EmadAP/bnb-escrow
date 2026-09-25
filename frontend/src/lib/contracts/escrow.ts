@@ -90,4 +90,23 @@ export const escrowAbi = [
       },
     ],
   },
+  {
+    type: "function",
+    name: "deposit",
+    stateMutability: "nonpayable",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "release",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "escrowId", type: "uint256" }],
+    outputs: [],
+  },
 ] as const;

@@ -4,6 +4,7 @@ import Container from "./components/Container";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import CreateEscrow from "./components/CreateEscrow";
+import Transaction from "./components/Transaction";
 
 function App() {
   const view = useAppStore((state) => state.view);
@@ -18,15 +19,7 @@ function App() {
 
         {view === "create" && <CreateEscrow />}
 
-        {view === "transaction" && (
-          <section>
-            <h2>Transaction</h2>
-
-            <button onClick={() => setView("escrow")}>
-              Transaction Complete
-            </button>
-          </section>
-        )}
+        {view === "transaction" && <Transaction />}
 
         {view === "escrow" && (
           <section>

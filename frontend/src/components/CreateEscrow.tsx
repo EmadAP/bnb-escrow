@@ -166,7 +166,7 @@ function CreateEscrow() {
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 rounded-xl border bg-card p-6"
+          className="space-y-6 border bg-card p-6"
         >
           <div className="space-y-2">
             <Label htmlFor="buyer">Buyer</Label>

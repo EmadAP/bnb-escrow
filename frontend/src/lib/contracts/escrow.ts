@@ -53,4 +53,41 @@ export const escrowAbi = [
     ],
     anonymous: false,
   },
+  {
+    type: "function",
+    name: "escrows",
+    stateMutability: "view",
+    inputs: [
+      {
+        name: "",
+        type: "uint256",
+      },
+    ],
+    outputs: [
+      {
+        name: "buyer",
+        type: "address",
+      },
+      {
+        name: "seller",
+        type: "address",
+      },
+      {
+        name: "arbiter",
+        type: "address",
+      },
+      {
+        name: "token",
+        type: "address",
+      },
+      {
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        name: "state",
+        type: "uint8",
+      },
+    ],
+  },
 ] as const;

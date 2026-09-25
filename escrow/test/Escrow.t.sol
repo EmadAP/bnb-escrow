@@ -10,24 +10,31 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract EscrowTest is Test {
     using SafeERC20 for IERC20;
 
+    uint256 internal constant ESCROW_AMOUNT = 100 ether;
+    uint256 internal constant PARTIAL_AMOUNT = 50 ether;
+
     Escrow escrow;
     IERC20 token;
 
-    address buyer = makeAddr("buyer");
-    address seller = makeAddr("seller");
-    address arbiter = makeAddr("arbiter");
+    address buyer;
+    address seller;
+    address arbiter;
 
     function setUp() public {
-        escrow = new Escrow();
+        buyer = makeAddr("buyer");
+        seller = makeAddr("seller");
+        arbiter = makeAddr("arbiter");
+
         token = new MockUSDT();
+        escrow = new Escrow();
     }
 
     function testCreateEscrow() public {
         vm.expectEmit(true, true, true, true);
 
-        emit Escrow.EscrowCreated(0, address(this), seller, arbiter, address(token), 100 ether);
+        emit Escrow.EscrowCreated(0, address(this), seller, arbiter, address(token), ESCROW_AMOUNT);
 
-        uint256 escrowId = escrow.createEscrow(seller, arbiter, token, 100 ether);
+        uint256 escrowId = escrow.createEscrow(seller, arbiter, token, ESCROW_AMOUNT);
 
         assertEq(escrowId, 0);
 
@@ -44,12 +51,12 @@ contract EscrowTest is Test {
         assertEq(escrowSeller, seller);
         assertEq(escrowArbiter, arbiter);
         assertEq(address(escrowToken), address(token));
-        assertEq(amount, 100 ether);
+        assertEq(amount, ESCROW_AMOUNT);
         assertEq(uint256(state), uint256(Escrow.State.Created));
     }
 
     function testDeposit() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -57,7 +64,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.expectEmit(true, false, false, false);
 
@@ -75,7 +82,7 @@ contract EscrowTest is Test {
     }
 
     function testRelease() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -83,7 +90,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -104,7 +111,7 @@ contract EscrowTest is Test {
     }
 
     function testOnlyBuyerCanRelease() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -112,18 +119,18 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
 
-        vm.expectRevert("Not buyer");
+        vm.expectRevert(Escrow.NotBuyer.selector);
         vm.prank(seller);
         escrow.release(escrowId);
     }
 
     function testBuyerCanDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -131,7 +138,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -149,7 +156,7 @@ contract EscrowTest is Test {
     }
 
     function testSellerCanDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -157,7 +164,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -175,7 +182,7 @@ contract EscrowTest is Test {
     }
 
     function testArbiterCanReleaseAfterDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -183,7 +190,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -211,7 +218,7 @@ contract EscrowTest is Test {
     }
 
     function testArbiterCanRefundBuyerAfterDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -219,7 +226,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -247,7 +254,7 @@ contract EscrowTest is Test {
     }
 
     function testOnlyArbiterCanResolveDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -255,7 +262,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -263,24 +270,24 @@ contract EscrowTest is Test {
         vm.prank(buyer);
         escrow.dispute(escrowId);
 
-        vm.expectRevert("Not arbiter");
+        vm.expectRevert(Escrow.NotArbiter.selector);
         vm.prank(buyer);
         escrow.resolveDispute(escrowId, true);
     }
 
     function testCannotReleaseBeforeDeposit() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         vm.prank(buyer);
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.release(escrowId);
     }
 
     function testCannotDepositTwice() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -288,69 +295,69 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.deposit(escrowId);
     }
 
     function testCannotDisputeBeforeDeposit() public {
         vm.prank(buyer);
-        uint256 escrowId = escrow.createEscrow(seller, arbiter, token, 100 ether);
+        uint256 escrowId = escrow.createEscrow(seller, arbiter, token, ESCROW_AMOUNT);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.dispute(escrowId);
     }
 
     function testCannotCreateEscrowWithZeroSeller() public {
-        vm.expectRevert("Invalid seller");
+        vm.expectRevert(Escrow.InvalidSeller.selector);
 
-        escrow.createEscrow(address(0), arbiter, token, 100 ether);
+        escrow.createEscrow(address(0), arbiter, token, ESCROW_AMOUNT);
     }
 
     function testCannotCreateEscrowWithZeroArbiter() public {
-        vm.expectRevert("Invalid arbiter");
+        vm.expectRevert(Escrow.InvalidArbiter.selector);
 
-        escrow.createEscrow(seller, address(0), token, 100 ether);
+        escrow.createEscrow(seller, address(0), token, ESCROW_AMOUNT);
     }
 
     function testCannotCreateEscrowWithZeroToken() public {
-        vm.expectRevert("Invalid token");
+        vm.expectRevert(Escrow.InvalidToken.selector);
 
-        escrow.createEscrow(seller, arbiter, IERC20(address(0)), 100 ether);
+        escrow.createEscrow(seller, arbiter, IERC20(address(0)), ESCROW_AMOUNT);
     }
 
     function testCannotCreateEscrowWithZeroAmount() public {
-        vm.expectRevert("Invalid amount");
+        vm.expectRevert(Escrow.InvalidAmount.selector);
 
         escrow.createEscrow(seller, arbiter, token, 0);
     }
 
     function testCannotCreateEscrowWithBuyerAsSeller() public {
-        vm.expectRevert("Buyer cannot be seller");
+        vm.expectRevert(Escrow.BuyerCannotBeSeller.selector);
 
-        escrow.createEscrow(address(this), arbiter, token, 100 ether);
+        escrow.createEscrow(address(this), arbiter, token, ESCROW_AMOUNT);
     }
 
     function testCannotCreateEscrowWithBuyerAsArbiter() public {
-        vm.expectRevert("Buyer cannot be arbiter");
+        vm.expectRevert(Escrow.BuyerCannotBeArbiter.selector);
 
-        escrow.createEscrow(seller, address(this), token, 100 ether);
+        escrow.createEscrow(seller, address(this), token, ESCROW_AMOUNT);
     }
 
     function testCannotCreateEscrowWithSellerAsArbiter() public {
-        vm.expectRevert("Seller cannot be arbiter");
+        vm.expectRevert(Escrow.SellerCannotBeArbiter.selector);
 
-        escrow.createEscrow(seller, seller, token, 100 ether);
+        escrow.createEscrow(seller, seller, token, ESCROW_AMOUNT);
     }
 
     function testOnlyBuyerCanDeposit() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -358,15 +365,15 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
-        vm.expectRevert("Not buyer");
+        vm.expectRevert(Escrow.NotBuyer.selector);
         vm.prank(seller);
         escrow.deposit(escrowId);
     }
 
     function testArbiterCannotRelease() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -374,18 +381,18 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
 
-        vm.expectRevert("Not buyer");
+        vm.expectRevert(Escrow.NotBuyer.selector);
         vm.prank(arbiter);
         escrow.release(escrowId);
     }
 
     function testOnlyBuyerOrSellerCanDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -393,18 +400,18 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
 
-        vm.expectRevert("Not party");
+        vm.expectRevert(Escrow.NotParty.selector);
         vm.prank(arbiter);
         escrow.dispute(escrowId);
     }
 
     function testSellerCannotResolveDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -412,7 +419,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -420,13 +427,13 @@ contract EscrowTest is Test {
         vm.prank(buyer);
         escrow.dispute(escrowId);
 
-        vm.expectRevert("Not arbiter");
+        vm.expectRevert(Escrow.NotArbiter.selector);
         vm.prank(seller);
         escrow.resolveDispute(escrowId, true);
     }
 
     function testCannotReleaseAfterDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -434,7 +441,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -442,13 +449,13 @@ contract EscrowTest is Test {
         vm.prank(buyer);
         escrow.dispute(escrowId);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.release(escrowId);
     }
 
     function testCannotDepositAfterDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -456,7 +463,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -464,13 +471,13 @@ contract EscrowTest is Test {
         vm.prank(buyer);
         escrow.dispute(escrowId);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.deposit(escrowId);
     }
 
     function testCannotDisputeAfterCompletion() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -478,7 +485,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -486,13 +493,13 @@ contract EscrowTest is Test {
         vm.prank(buyer);
         escrow.release(escrowId);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.dispute(escrowId);
     }
 
     function testCannotResolveBeforeDispute() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -500,18 +507,18 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(arbiter);
         escrow.resolveDispute(escrowId, true);
     }
 
     function testCannotResolveDisputeTwice() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -519,7 +526,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -530,13 +537,13 @@ contract EscrowTest is Test {
         vm.prank(arbiter);
         escrow.resolveDispute(escrowId, true);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(arbiter);
         escrow.resolveDispute(escrowId, false);
     }
 
     function testMultipleEscrowsAreIndependent() public {
-        uint256 firstAmount = 100 ether;
+        uint256 firstAmount = ESCROW_AMOUNT;
         uint256 secondAmount = 200 ether;
 
         address buyer2 = makeAddr("buyer2");
@@ -553,10 +560,10 @@ contract EscrowTest is Test {
         uint256 secondEscrowId = escrow.createEscrow(seller2, arbiter2, token, secondAmount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), firstAmount);
+        assertTrue(token.approve(address(escrow), firstAmount));
 
         vm.prank(buyer2);
-        token.approve(address(escrow), secondAmount);
+        assertTrue(token.approve(address(escrow), secondAmount));
 
         vm.prank(buyer);
         escrow.deposit(firstEscrowId);
@@ -590,7 +597,7 @@ contract EscrowTest is Test {
     }
 
     function testCannotDisputeAfterRefund() public {
-        uint256 amount = 100 ether;
+        uint256 amount = ESCROW_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -598,7 +605,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.prank(buyer);
         escrow.deposit(escrowId);
@@ -609,14 +616,14 @@ contract EscrowTest is Test {
         vm.prank(arbiter);
         escrow.resolveDispute(escrowId, false);
 
-        vm.expectRevert("Invalid state");
+        vm.expectRevert(Escrow.InvalidState.selector);
         vm.prank(buyer);
         escrow.dispute(escrowId);
     }
 
     function testCannotDepositWithInsufficientAllowance() public {
-        uint256 amount = 100 ether;
-        uint256 allowance = 50 ether;
+        uint256 amount = ESCROW_AMOUNT;
+        uint256 allowance = PARTIAL_AMOUNT;
 
         token.safeTransfer(buyer, amount);
 
@@ -624,7 +631,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), allowance);
+        assertTrue(token.approve(address(escrow), allowance));
 
         vm.expectRevert();
         vm.prank(buyer);
@@ -632,8 +639,8 @@ contract EscrowTest is Test {
     }
 
     function testCannotDepositWithInsufficientBalance() public {
-        uint256 amount = 100 ether;
-        uint256 buyerBalance = 50 ether;
+        uint256 amount = ESCROW_AMOUNT;
+        uint256 buyerBalance = PARTIAL_AMOUNT;
 
         token.safeTransfer(buyer, buyerBalance);
 
@@ -641,7 +648,7 @@ contract EscrowTest is Test {
         uint256 escrowId = escrow.createEscrow(seller, arbiter, token, amount);
 
         vm.prank(buyer);
-        token.approve(address(escrow), amount);
+        assertTrue(token.approve(address(escrow), amount));
 
         vm.expectRevert();
         vm.prank(buyer);

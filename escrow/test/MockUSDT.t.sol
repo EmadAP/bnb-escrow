@@ -9,37 +9,43 @@ import {MockUSDT} from "../src/MockUSDT.sol";
 contract MockUSDTTest is Test {
     using SafeERC20 for IERC20;
 
+    uint256 internal constant TRANSFER_AMOUNT = 100 ether;
+    uint256 internal constant ALLOWANCE_AMOUNT = 50 ether;
+
     IERC20 token;
 
-    address buyer = makeAddr("buyer");
-    address seller = makeAddr("seller");
+    address buyer;
+    address seller;
 
     function setUp() public {
+        buyer = makeAddr("buyer");
+        seller = makeAddr("seller");
+
         token = new MockUSDT();
     }
 
-    function testInitialSupply() public {
+    function testInitialSupply() public view {
         assertEq(token.balanceOf(address(this)), 1_000_000 ether);
     }
 
     function testTransfer() public {
-        token.safeTransfer(buyer, 100 ether);
+        token.safeTransfer(buyer, TRANSFER_AMOUNT);
 
-        assertEq(token.balanceOf(buyer), 100 ether);
+        assertEq(token.balanceOf(buyer), TRANSFER_AMOUNT);
         assertEq(token.balanceOf(address(this)), 999_900 ether);
     }
 
     function testApproveAndTransferFrom() public {
-        token.safeTransfer(buyer, 100 ether);
+        token.safeTransfer(buyer, TRANSFER_AMOUNT);
 
         vm.prank(buyer);
-        token.approve(address(this), 50 ether);
+        assertTrue(token.approve(address(this), ALLOWANCE_AMOUNT));
 
-        assertEq(token.allowance(buyer, address(this)), 50 ether);
+        assertEq(token.allowance(buyer, address(this)), ALLOWANCE_AMOUNT);
 
-        token.safeTransferFrom(buyer, seller, 50 ether);
+        token.safeTransferFrom(buyer, seller, ALLOWANCE_AMOUNT);
 
-        assertEq(token.balanceOf(buyer), 50 ether);
-        assertEq(token.balanceOf(seller), 50 ether);
+        assertEq(token.balanceOf(buyer), ALLOWANCE_AMOUNT);
+        assertEq(token.balanceOf(seller), ALLOWANCE_AMOUNT);
     }
 }

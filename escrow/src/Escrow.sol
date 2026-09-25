@@ -7,6 +7,19 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 contract Escrow {
     using SafeERC20 for IERC20;
 
+    error InvalidSeller();
+    error InvalidArbiter();
+    error InvalidToken();
+    error InvalidAmount();
+    error BuyerCannotBeSeller();
+    error BuyerCannotBeArbiter();
+    error SellerCannotBeArbiter();
+
+    error NotBuyer();
+    error NotParty();
+    error NotArbiter();
+    error InvalidState();
+
     event EscrowCreated(
         uint256 indexed escrowId,
         address indexed buyer,
@@ -49,13 +62,13 @@ contract Escrow {
         external
         returns (uint256 escrowId)
     {
-        require(seller != address(0), "Invalid seller");
-        require(arbiter != address(0), "Invalid arbiter");
-        require(address(token) != address(0), "Invalid token");
-        require(amount > 0, "Invalid amount");
-        require(seller != msg.sender, "Buyer cannot be seller");
-        require(arbiter != msg.sender, "Buyer cannot be arbiter");
-        require(arbiter != seller, "Seller cannot be arbiter");
+        if (seller == address(0)) revert InvalidSeller();
+        if (arbiter == address(0)) revert InvalidArbiter();
+        if (address(token) == address(0)) revert InvalidToken();
+        if (amount == 0) revert InvalidAmount();
+        if (seller == msg.sender) revert BuyerCannotBeSeller();
+        if (arbiter == msg.sender) revert BuyerCannotBeArbiter();
+        if (arbiter == seller) revert SellerCannotBeArbiter();
 
         escrowId = nextEscrowId++;
 
@@ -69,8 +82,8 @@ contract Escrow {
     function deposit(uint256 escrowId) external {
         EscrowData storage escrow = escrows[escrowId];
 
-        require(msg.sender == escrow.buyer, "Not buyer");
-        require(escrow.state == State.Created, "Invalid state");
+        if (msg.sender != escrow.buyer) revert NotBuyer();
+        if (escrow.state != State.Created) revert InvalidState();
 
         escrow.token.safeTransferFrom(escrow.buyer, address(this), escrow.amount);
 
@@ -82,8 +95,8 @@ contract Escrow {
     function release(uint256 escrowId) external {
         EscrowData storage escrow = escrows[escrowId];
 
-        require(msg.sender == escrow.buyer, "Not buyer");
-        require(escrow.state == State.Funded, "Invalid state");
+        if (msg.sender != escrow.buyer) revert NotBuyer();
+        if (escrow.state != State.Funded) revert InvalidState();
 
         escrow.token.safeTransfer(escrow.seller, escrow.amount);
 
@@ -95,8 +108,11 @@ contract Escrow {
     function dispute(uint256 escrowId) external {
         EscrowData storage escrow = escrows[escrowId];
 
-        require(msg.sender == escrow.buyer || msg.sender == escrow.seller, "Not party");
-        require(escrow.state == State.Funded, "Invalid state");
+        if (msg.sender != escrow.buyer && msg.sender != escrow.seller) {
+            revert NotParty();
+        }
+
+        if (escrow.state != State.Funded) revert InvalidState();
 
         escrow.state = State.Disputed;
 
@@ -106,8 +122,8 @@ contract Escrow {
     function resolveDispute(uint256 escrowId, bool releaseToSeller) external {
         EscrowData storage escrow = escrows[escrowId];
 
-        require(msg.sender == escrow.arbiter, "Not arbiter");
-        require(escrow.state == State.Disputed, "Invalid state");
+        if (msg.sender != escrow.arbiter) revert NotArbiter();
+        if (escrow.state != State.Disputed) revert InvalidState();
 
         if (releaseToSeller) {
             escrow.token.safeTransfer(escrow.seller, escrow.amount);

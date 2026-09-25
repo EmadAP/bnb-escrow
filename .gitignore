@@ -28,12 +28,7 @@ lerna-debug.log*
 
 escrow/cache/
 escrow/out/
-
-# Foundry broadcast logs
-
-!/escrow/broadcast/
-escrow/broadcast/*/31337/
-escrow/broadcast/**/dry-run/
+escrow/broadcast/
 
 # Commonly ignored directories
 

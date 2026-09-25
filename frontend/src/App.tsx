@@ -2,11 +2,17 @@ import { useState } from "react";
 
 import Container from "./components/Container";
 import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
 
-type AppView = "home" | "create" | "lookup" | "transaction" | "escrow";
+type AppView = "home" | "create" | "transaction" | "escrow";
 
 function App() {
   const [view, setView] = useState<AppView>("home");
+
+  function handleOpenEscrow(escrowId: string) {
+    console.log("Open escrow:", escrowId);
+    setView("escrow");
+  }
 
   return (
     <main className="min-h-svh w-full">
@@ -14,19 +20,10 @@ function App() {
 
       <Container>
         {view === "home" && (
-          <section>
-            <h2>Home</h2>
-
-            <div className="mt-4 flex gap-4">
-              <button onClick={() => setView("create")}>
-                Create an Escrow
-              </button>
-
-              <button onClick={() => setView("lookup")}>
-                Open Existing Escrow
-              </button>
-            </div>
-          </section>
+          <Hero
+            onCreateEscrow={() => setView("create")}
+            onOpenEscrow={handleOpenEscrow}
+          />
         )}
 
         {view === "create" && (
@@ -34,14 +31,6 @@ function App() {
             <h2>Create Escrow</h2>
 
             <button onClick={() => setView("transaction")}>Continue</button>
-          </section>
-        )}
-
-        {view === "lookup" && (
-          <section>
-            <h2>Open Existing Escrow</h2>
-
-            <button onClick={() => setView("escrow")}>Open Escrow</button>
           </section>
         )}
 

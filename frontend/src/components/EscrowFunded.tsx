@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/stores/app-store";
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
 import EscrowActionDialog from "./EscrowActionDialog";
+import { ShieldPlus } from "lucide-react";
 
 type EscrowFundedProps = {
   escrowId: string;
@@ -109,7 +110,11 @@ function EscrowFunded({ escrowId, onEscrowUpdated }: EscrowFundedProps) {
   if (!isParty) {
     return (
       <div className="pt-6">
-        <h3 className="font-semibold">Escrow is funded</h3>
+        <div className="flex items-center gap-3">
+          <ShieldPlus className="size-6 text-blue-600" />
+
+          <h3 className="font-semibold">Escrow is funded</h3>
+        </div>
 
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           The funds are held by the escrow contract. The buyer can release the

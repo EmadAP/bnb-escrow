@@ -1,4 +1,4 @@
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/stores/app-store";
@@ -25,7 +25,7 @@ function EscrowResult({
   return (
     <div className="space-y-4 pt-6">
       <div className="flex items-center gap-3">
-        <CheckCircle2 className="size-6 text-green-600" />
+        <ShieldCheck className="size-6 text-green-600" />
 
         <h3 className="font-semibold">{title}</h3>
       </div>

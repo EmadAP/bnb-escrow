@@ -132,7 +132,7 @@ function EscrowDisputed({
   return (
     <div className="space-y-4 pt-6">
       <div className="flex items-center gap-3">
-        <ShieldAlert className="size-6 text-amber-500" />
+        <ShieldAlert className="size-6 text-amber-600" />
 
         <h3 className="font-semibold">Dispute in Progress</h3>
       </div>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/stores/app-store";
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
 import { erc20Abi } from "@/lib/contracts/erc20";
+import { ShieldCog } from "lucide-react";
 
 type EscrowCreatedProps = {
   escrowId: string;
@@ -181,7 +182,11 @@ function EscrowCreated({
 
   return (
     <div className="space-y-4 pt-6">
-      <h3 className="font-semibold">Fund this escrow</h3>
+      <div className="flex items-center gap-3">
+        <ShieldCog className="size-6 text-primary" />
+
+        <h3 className="font-semibold">Fund this escrow</h3>
+      </div>
 
       <p className="text-sm leading-6 text-muted-foreground">
         Approve the escrow contract to spend your {symbol}, then deposit the

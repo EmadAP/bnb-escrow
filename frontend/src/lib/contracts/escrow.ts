@@ -54,6 +54,59 @@ export const escrowAbi = [
     anonymous: false,
   },
   {
+    type: "event",
+    name: "DisputeOpened",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+        indexed: true,
+      },
+      {
+        name: "initiator",
+        type: "address",
+        indexed: true,
+      },
+    ],
+  },
+  {
+    type: "event",
+    name: "DisputeResolved",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+        indexed: true,
+      },
+      {
+        name: "releaseToSeller",
+        type: "bool",
+        indexed: false,
+      },
+    ],
+  },
+  {
+    type: "event",
+    name: "EscrowFundsTransferred",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+        indexed: true,
+      },
+      {
+        name: "recipient",
+        type: "address",
+        indexed: true,
+      },
+      {
+        name: "amount",
+        type: "uint256",
+        indexed: false,
+      },
+    ],
+  },
+  {
     type: "function",
     name: "escrows",
     stateMutability: "view",
@@ -107,6 +160,34 @@ export const escrowAbi = [
     name: "release",
     stateMutability: "nonpayable",
     inputs: [{ name: "escrowId", type: "uint256" }],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "dispute",
+    stateMutability: "nonpayable",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+      },
+    ],
+    outputs: [],
+  },
+  {
+    type: "function",
+    name: "resolveDispute",
+    stateMutability: "nonpayable",
+    inputs: [
+      {
+        name: "escrowId",
+        type: "uint256",
+      },
+      {
+        name: "releaseToSeller",
+        type: "bool",
+      },
+    ],
     outputs: [],
   },
 ] as const;

@@ -11,6 +11,8 @@ import EscrowCreated from "../EscrowCreated";
 import EscrowDetails from "../EscrowDetails";
 import EscrowFunded from "../EscrowFunded";
 import EscrowCompleted from "../EscrowCompleted";
+import EscrowDisputed from "../EscrowDisputed";
+import EscrowRefunded from "../EscrowRefunded";
 
 const STATES = [
   "Created",
@@ -166,14 +168,10 @@ function Escrow() {
   const isCurrentUserBuyer =
     address !== undefined && address.toLowerCase() === buyer.toLowerCase();
 
-  // const isCurrentUserSeller =
-  //   address !== undefined &&
-  //   address.toLowerCase() === seller.toLowerCase();
-
   return (
     <section className="flex min-h-[calc(100svh-4.5rem)] items-center justify-center py-16">
       <div className="w-full max-w-2xl">
-        {(state === 0 || state === 1 || state === 2) && (
+        {(state === 0 || state === 1) && (
           <EscrowDetails
             escrowId={escrowId}
             buyer={buyer}
@@ -203,20 +201,33 @@ function Escrow() {
         {state === 1 && (
           <EscrowFunded
             escrowId={escrowId}
+            seller={seller}
             isCurrentUserBuyer={isCurrentUserBuyer}
-            onEscrowUpdated={(hash) => {
-              setReleaseHash(hash);
+            onEscrowUpdated={(transactionHash) => {
+              if (transactionHash) {
+                setReleaseHash(transactionHash);
+              }
+
               void escrowQuery.refetch();
             }}
           />
         )}
 
         {state === 2 && (
-          <div className="border-t pt-6">
-            <p className="text-sm text-muted-foreground">
-              This escrow is under dispute.
-            </p>
-          </div>
+          <EscrowDisputed
+            escrowId={escrowId}
+            arbiter={arbiter}
+            amount={amount}
+            decimals={decimals}
+            symbol={symbol}
+            onEscrowUpdated={(transactionHash) => {
+              if (transactionHash) {
+                setReleaseHash(transactionHash);
+              }
+
+              void escrowQuery.refetch();
+            }}
+          />
         )}
 
         {state === 3 && releaseHash && (
@@ -230,11 +241,12 @@ function Escrow() {
         )}
 
         {state === 4 && (
-          <div className="border-t pt-6">
-            <p className="text-sm text-muted-foreground">
-              This escrow has been refunded.
-            </p>
-          </div>
+          <EscrowRefunded
+            escrowId={escrowId}
+            buyer={buyer}
+            amount={formattedAmount}
+            symbol={symbol}
+          />
         )}
       </div>
     </section>

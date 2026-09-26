@@ -1,19 +1,72 @@
 # BNB Escrow
 
-A small decentralized escrow application built to learn Solidity, smart contracts, and EVM application development.
+A small decentralized escrow application built to learn and demonstrate Solidity, smart contract development, and EVM application development.
 
-The project consists of a Solidity smart contract and a React-based dApp that allows users to create token-based escrows between a buyer and seller, with an arbiter available to resolve disputes.
+The project implements a token-based escrow between a **buyer** and **seller**, with an **arbiter** responsible for resolving disputes.
 
-The project is built for and deployed to **BNB Smart Chain Testnet**.
+The smart contracts are deployed on **BNB Smart Chain Testnet**, and the frontend is publicly deployed using GitHub Pages.
+
+## Live Demo
+
+**[Open the BNB Escrow dApp](https://emadap.github.io/bnb-escrow/)**
+
+## Repository
+
+**[GitHub Repository](https://github.com/EmadAP/bnb-escrow)**
+
+## Network
+
+| Property     | Value                                                               |
+| ------------ | ------------------------------------------------------------------- |
+| Network      | BNB Smart Chain Testnet                                             |
+| Chain ID     | `97`                                                                |
+| Native Token | `tBNB`                                                              |
+| Explorer     | [BscScan Testnet](https://testnet.bscscan.com/)                     |
+| Frontend     | [emadap.github.io/bnb-escrow](https://emadap.github.io/bnb-escrow/) |
+
+## Deployed Contracts
+
+### Escrow
+
+```text
+0x1A8A4ab7d8364b1FBa1D7Bc9744053965d0365c7
+```
+
+[View Escrow Contract on BscScan](https://testnet.bscscan.com/address/0x1A8A4ab7d8364b1FBa1D7Bc9744053965d0365c7)
+
+### MockUSDT
+
+```text
+0x12DC9bF901F32612057BD664b52287Cf478a9ea6
+```
+
+[View MockUSDT Contract on BscScan](https://testnet.bscscan.com/address/0x12DC9bF901F32612057BD664b52287Cf478a9ea6)
+
+`MockUSDT` is an ERC-20 token deployed for testing and demonstration purposes.
+
+---
 
 ## Project Structure
 
 ```text
 bnb-escrow/
 
-├── escrow/       # Solidity smart contracts and Foundry project
-├── frontend/     # React + TypeScript dApp
-├── flake.nix     # Nix development environment
+├── .github/
+│   └── workflows/
+│       ├── test.yml
+│       └── deploy-frontend.yml
+│
+├── escrow/
+│   ├── src/        # Solidity smart contracts
+│   ├── test/       # Foundry tests
+│   ├── script/     # Deployment scripts
+│   └── ...
+│
+├── frontend/
+│   ├── src/        # React dApp
+│   └── ...
+│
+├── flake.nix       # Nix development environment
 ├── README.md
 └── .gitignore
 ```
@@ -40,13 +93,16 @@ bnb-escrow/
 - React Hook Form
 - Zod
 
-### Development Environment
+### Development
 
 - Nix
 - pnpm
-- Git
+- GitHub Actions
+- GitHub Pages
 
-## How It Works
+---
+
+# Escrow Model
 
 The escrow consists of three parties:
 
@@ -54,7 +110,7 @@ The escrow consists of three parties:
 - **Seller** — receives the funds when the escrow is completed.
 - **Arbiter** — resolves disputes between the buyer and seller.
 
-The basic lifecycle is:
+The escrow supports the following lifecycle:
 
 ```text
 Created
@@ -63,22 +119,30 @@ Created
    ▼
 Funded
    ├── Buyer releases funds
-   │
+   │       │
+   │       ▼
+   │    Completed
    │
    └── Buyer or Seller opens dispute
-                │
-                ▼
-             Disputed
-                │
-                │ Arbiter resolves
-                ├── Release to Seller
-                │
-                └── Refund Buyer
+               │
+               ▼
+            Disputed
+               │
+               │ Arbiter resolves
+               ├── Release to Seller
+               │       │
+               │       ▼
+               │    Completed
+               │
+               └── Refund Buyer
+                       │
+                       ▼
+                    Refunded
 ```
 
 ## Escrow Workflow
 
-### 1. Create an Escrow
+### 1. Create Escrow
 
 The buyer provides:
 
@@ -91,32 +155,52 @@ The smart contract stores these values and creates a new escrow.
 
 ### 2. Approve and Deposit
 
-The buyer approves the escrow contract to spend the selected ERC-20 token and then deposits the required amount.
+The buyer approves the escrow contract to spend the selected ERC-20 token.
+
+The buyer then deposits the required amount.
 
 The tokens are held by the escrow contract.
 
 ### 3. Release Funds
 
-If the transaction is completed successfully, the buyer can release the funds.
+When the transaction is completed, the buyer can release the funds.
 
 The escrow contract transfers the tokens to the seller.
 
-### 4. Dispute
+### 4. Open a Dispute
 
 If there is a disagreement, either the buyer or seller can open a dispute.
 
 The escrow enters the `Disputed` state.
 
-### 5. Resolve Dispute
+### 5. Resolve the Dispute
 
-The arbiter can resolve the dispute in one of two ways:
+The arbiter can resolve the dispute in either direction:
 
 - Release the funds to the seller
 - Refund the funds to the buyer
 
+---
+
+# Smart Contract
+
+The main contract is:
+
+```text
+escrow/src/Escrow.sol
+```
+
+The project also contains:
+
+```text
+escrow/src/MockUSDT.sol
+```
+
+`MockUSDT` is an OpenZeppelin ERC-20 implementation used for testing and demonstration.
+
 ## Escrow States
 
-The smart contract uses the following states:
+The contract uses five states:
 
 ```text
 Created
@@ -126,91 +210,81 @@ Completed
 Refunded
 ```
 
-State transitions:
+## Important Contract Concepts
 
-```text
-Created → Funded → Completed
+The project demonstrates:
 
-Created → Funded → Disputed → Completed
-                           └──→ Refunded
-```
+- Solidity structs and enums
+- Mappings
+- ERC-20 token interaction
+- `transferFrom`
+- Token allowances
+- OpenZeppelin `SafeERC20`
+- Access control through `msg.sender`
+- Custom errors
+- Events
+- State transitions
+- Contract-to-token interaction
+- Deployment with Foundry
+- On-chain state verification
 
-## Smart Contract
+---
 
-The main contract is:
-
-```text
-escrow/src/Escrow.sol
-```
-
-The project also contains a `MockUSDT` ERC-20 token for development and testing:
-
-```text
-escrow/src/MockUSDT.sol
-```
-
-### Deployed Contracts
-
-The contracts are deployed on **BNB Smart Chain Testnet**.
-
-| Contract | Address                                      |
-| -------- | -------------------------------------------- |
-| Escrow   | `0x1A8A4ab7d8364b1FBa1D7Bc9744053965d0365c7` |
-| MockUSDT | `0x12DC9bF901F32612057BD664b52287Cf478a9ea6` |
-
-Explorer:
-
-- [BNB Smart Chain Testnet Explorer](https://testnet.bscscan.com/)
-
-## Foundry
+# Foundry
 
 [Foundry](https://book.getfoundry.sh/) is used to build, test, format, and deploy the smart contracts.
 
 Foundry provides:
 
-- **Forge** — smart contract testing and build tool
-- **Cast** — command-line tool for interacting with EVM chains
+- **Forge** — smart contract build and testing
+- **Cast** — command-line interaction with EVM contracts
 - **Anvil** — local EVM development node
 - **Chisel** — Solidity REPL
 
-### Build
+## Build
 
 ```shell
 cd escrow
 forge build
 ```
 
-### Test
+## Test
 
 ```shell
 cd escrow
 forge test
 ```
 
-### Format
+## Format
 
 ```shell
 cd escrow
 forge fmt
 ```
 
-### Gas Snapshots
+## Gas Snapshot
 
 ```shell
 cd escrow
 forge snapshot
 ```
 
-### Start a Local Node
+## Start Local Node
 
 ```shell
 cd escrow
 anvil
 ```
 
-### Deploy
+## Deploy
 
-Set an RPC endpoint and deployer private key, then run:
+The deployment script is:
+
+```text
+escrow/script/Deploy.s.sol
+```
+
+Example:
 
 ```shell
 cd escrow
@@ -223,41 +297,36 @@ forge script script/Deploy.s.sol \
 
 > Never commit a private key or place one directly in the repository.
 
-### Cast
+## Cast
 
 ```shell
 cast <subcommand>
 ```
 
-### Help
+---
 
-```shell
-forge --help
-anvil --help
-cast --help
-```
+# Frontend
 
-## Frontend
+The frontend is a single-page decentralized application that communicates directly with the deployed smart contract through the user's wallet.
 
-The frontend is a single-page decentralized application that interacts directly with the escrow smart contract through the user's wallet.
-
-The frontend supports the main escrow workflow:
+The frontend supports:
 
 - Connect wallet
 - Create an escrow
 - Open an escrow by ID
 - View escrow details
+- Detect ERC-20 token metadata
 - Approve tokens
 - Deposit tokens
 - Release funds
 - Open disputes
 - Resolve disputes as the arbiter
 - Display transaction status
-- View transaction links
+- View transaction links on BscScan
 
-The frontend does not require a traditional application backend for the core dApp functionality.
+The frontend does not require a traditional backend for the core dApp functionality.
 
-### Run Locally
+## Run Locally
 
 ```shell
 cd frontend
@@ -265,23 +334,47 @@ pnpm install
 pnpm dev
 ```
 
-The development server will start on the Vite development port.
-
-### Build
+## Production Build
 
 ```shell
 cd frontend
 pnpm build
 ```
 
-### Preview Production Build
+## Preview Production Build
 
 ```shell
 cd frontend
 pnpm preview
 ```
 
-## Development Environment
+---
+
+# CI and Deployment
+
+The repository uses GitHub Actions for automated checks and frontend deployment.
+
+### Smart Contract CI
+
+Every push and pull request runs:
+
+```text
+forge fmt --check
+forge build --sizes
+forge test -vvv
+```
+
+### Frontend Deployment
+
+The frontend is automatically built and deployed to GitHub Pages when changes are pushed to `main`.
+
+The deployed application is available at:
+
+**https://emadap.github.io/bnb-escrow/**
+
+---
+
+# Development Environment
 
 The project uses Nix to provide a reproducible development environment.
 
@@ -291,22 +384,19 @@ Enter the development shell with:
 nix develop
 ```
 
-The development environment provides the tools required for the project, including:
+The environment provides the tools required by the project, including Node.js, pnpm, Foundry, and Git.
 
-- Node.js
-- pnpm
-- Foundry
-- Git
+---
 
-## Testing
+# Testing
 
-Smart contract tests are located in:
+The smart contract tests are located in:
 
 ```text
 escrow/test/
 ```
 
-Run the complete Solidity test suite with:
+Run the complete test suite with:
 
 ```shell
 cd escrow
@@ -323,36 +413,47 @@ The tests cover the main escrow lifecycle, including:
 - Disputes
 - Arbiter resolution
 - Refunds
-- Invalid participants and states
+- Invalid participants
+- Invalid escrow states
 
-## Project Scope
+---
 
-This project is intentionally small.
+# Project Scope
 
-The goal is to demonstrate the fundamentals of:
+This project is intentionally small and focused.
 
-- Solidity development
-- ERC-20 token interaction
-- Smart contract state management
+The goal is to demonstrate practical understanding of:
+
+- Solidity
+- Smart contract architecture
+- ERC-20 token interactions
+- Contract state management
 - Access control
 - Events
+- Custom errors
 - Foundry testing
 - Contract deployment
-- Wallet interaction
+- Wallet integration
 - EVM frontend development
 - On-chain application architecture
+- BNB Smart Chain development
 
-It is a learning and portfolio project rather than a production-ready escrow protocol.
+This is a learning and portfolio project and is **not intended to be a production-ready escrow protocol**.
 
-## Known Limitations
+---
+
+# Known Limitations
 
 - The arbiter is manually selected when an escrow is created.
 - There is no decentralized arbitration mechanism.
 - There are no platform fees.
-- There is no authentication outside of wallet ownership.
+- There is no off-chain identity system.
 - The project currently targets BNB Smart Chain Testnet.
-- The included `MockUSDT` token is intended for testing and demonstration.
+- `MockUSDT` is intended only for testing and demonstration.
+- The contract has not undergone a professional security audit.
 
-## License
+---
+
+# License
 
 MIT

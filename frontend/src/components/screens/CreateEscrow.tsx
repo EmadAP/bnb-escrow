@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import {
   useAccount,
+  useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { parseEventLogs, parseUnits } from "viem";
+import { isAddress, parseEventLogs, parseUnits } from "viem";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,7 @@ import {
 import { useAppStore } from "@/stores/app-store";
 
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
+import { erc20Abi } from "@/lib/contracts/erc20";
 
 const MOCK_USDT_ADDRESS = "0x12DC9bF901F32612057BD664b52287Cf478a9ea6";
 
@@ -49,13 +51,35 @@ function CreateEscrow() {
     register,
     handleSubmit,
     setError,
+    control,
     formState: { errors },
   } = useForm<CreateEscrowInput>({
     resolver: zodResolver(createEscrowSchema),
     defaultValues: {
       seller: "",
       arbiter: "",
+      token: MOCK_USDT_ADDRESS,
       amount: "",
+    },
+  });
+
+  const tokenAddress = useWatch({
+    control,
+    name: "token",
+  });
+
+  const validTokenAddress = isAddress(tokenAddress);
+
+  const {
+    data: tokenDecimals,
+    isLoading: isLoadingTokenDecimals,
+    isError: isTokenError,
+  } = useReadContract({
+    address: validTokenAddress ? tokenAddress : undefined,
+    abi: erc20Abi,
+    functionName: "decimals",
+    query: {
+      enabled: validTokenAddress,
     },
   });
 
@@ -135,7 +159,23 @@ function CreateEscrow() {
       return;
     }
 
-    const amount = parseUnits(values.amount, 18);
+    if (tokenDecimals === undefined) {
+      setError("token", {
+        message: "The token must be a valid ERC-20 token.",
+      });
+      return;
+    }
+
+    let amount: bigint;
+
+    try {
+      amount = parseUnits(values.amount, tokenDecimals);
+    } catch {
+      setError("amount", {
+        message: "Amount has too many decimal places for this token.",
+      });
+      return;
+    }
 
     writeContract({
       address: ESCROW_ADDRESS,
@@ -144,7 +184,7 @@ function CreateEscrow() {
       args: [
         values.seller as `0x${string}`,
         values.arbiter as `0x${string}`,
-        MOCK_USDT_ADDRESS,
+        values.token as `0x${string}`,
         amount,
       ],
     });
@@ -152,13 +192,20 @@ function CreateEscrow() {
 
   const isProcessing = isPending || isConfirming;
 
+  const tokenError =
+    errors.token?.message ??
+    (validTokenAddress && isTokenError
+      ? "Could not read this token. Make sure it is an ERC-20 token on BNB Smart Chain Testnet."
+      : undefined);
+
   return (
     <section className="flex min-h-[calc(100svh-4.5rem)] items-center justify-center py-16">
-      <div className="w-full max-w-xl">
+      <div className="w-full">
         <div className="mb-8">
           <h2 className="text-3xl font-bold tracking-tight">
             Create an Escrow
           </h2>
+
           <p className="mt-2 text-muted-foreground">
             You will become the buyer for this escrow.
           </p>
@@ -222,13 +269,29 @@ function CreateEscrow() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="token">Token</Label>
+            <Label htmlFor="token">Token contract</Label>
 
-            <Input id="token" value={MOCK_USDT_ADDRESS} readOnly />
+            <Input
+              id="token"
+              {...register("token")}
+              placeholder="0x..."
+              aria-invalid={Boolean(errors.token)}
+              disabled={isProcessing}
+            />
 
-            <p className="text-sm text-muted-foreground">
-              MockUSDT on BNB Smart Chain Testnet.
-            </p>
+            {tokenError ? (
+              <p className="text-sm text-destructive">{tokenError}</p>
+            ) : validTokenAddress && isLoadingTokenDecimals ? (
+              <p className="text-sm text-muted-foreground">Checking token...</p>
+            ) : tokenDecimals !== undefined ? (
+              <p className="text-sm text-muted-foreground">
+                ERC-20 token detected · {tokenDecimals} decimals
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Enter an ERC-20 token address on BNB Smart Chain Testnet.
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -248,9 +311,13 @@ function CreateEscrow() {
               <p className="text-sm text-destructive">
                 {errors.amount.message}
               </p>
+            ) : tokenDecimals !== undefined ? (
+              <p className="text-sm text-muted-foreground">
+                Amount of the selected token to place in escrow.
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Amount of MockUSDT to place in escrow.
+                Enter a valid ERC-20 token first.
               </p>
             )}
           </div>
@@ -263,7 +330,14 @@ function CreateEscrow() {
             type="submit"
             className="w-full"
             size="lg"
-            disabled={!address || isProcessing}
+            disabled={
+              !address ||
+              isProcessing ||
+              !validTokenAddress ||
+              tokenDecimals === undefined ||
+              isLoadingTokenDecimals ||
+              isTokenError
+            }
           >
             {isPending
               ? "Confirm transaction..."

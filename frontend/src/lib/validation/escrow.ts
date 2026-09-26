@@ -11,6 +11,11 @@ export const createEscrowSchema = z.object({
     .trim()
     .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid arbiter address"),
 
+  token: z
+    .string()
+    .trim()
+    .regex(/^0x[a-fA-F0-9]{40}$/, "Invalid token address"),
+
   amount: z
     .string()
     .trim()

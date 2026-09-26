@@ -44,14 +44,6 @@ function Escrow() {
 
   const escrow = escrowQuery.data;
 
-  console.log("ESCROW DEBUG", {
-    escrowId,
-    escrow,
-    isLoading: escrowQuery.isLoading,
-    isError: escrowQuery.isError,
-    error: escrowQuery.error,
-  });
-
   const tokenQuery = useReadContract({
     address: escrow?.[3],
     abi: erc20Abi,

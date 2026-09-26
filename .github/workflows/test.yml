@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
+    defaults:
+      run:
+        working-directory: escrow
+
     steps:
       - uses: actions/checkout@v6
         with:

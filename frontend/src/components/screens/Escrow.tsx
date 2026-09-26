@@ -1,5 +1,5 @@
-import { useCallback, useState } from "react";
-import { useAccount, useReadContract } from "wagmi";
+import { useCallback, useEffect, useState } from "react";
+import { useReadContract } from "wagmi";
 import { formatUnits, isAddress } from "viem";
 
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,8 @@ import { erc20Abi } from "@/lib/contracts/erc20";
 import EscrowCreated from "../EscrowCreated";
 import EscrowDetails from "../EscrowDetails";
 import EscrowFunded from "../EscrowFunded";
-import EscrowCompleted from "../EscrowCompleted";
 import EscrowDisputed from "../EscrowDisputed";
-import EscrowRefunded from "../EscrowRefunded";
+import EscrowResult from "../EscrowResult";
 
 const STATES = [
   "Created",
@@ -24,10 +23,12 @@ const STATES = [
 
 function Escrow() {
   const [releaseHash, setReleaseHash] = useState<`0x${string}` | null>(null);
-  const { address } = useAccount();
 
   const escrowId = useAppStore((state) => state.escrowId);
   const setView = useAppStore((state) => state.setView);
+  const setEscrowParticipants = useAppStore(
+    (state) => state.setEscrowParticipants,
+  );
 
   const escrowQuery = useReadContract({
     address: ESCROW_ADDRESS,
@@ -40,6 +41,14 @@ function Escrow() {
   });
 
   const escrow = escrowQuery.data;
+
+  console.log("ESCROW DEBUG", {
+    escrowId,
+    escrow,
+    isLoading: escrowQuery.isLoading,
+    isError: escrowQuery.isError,
+    error: escrowQuery.error,
+  });
 
   const tokenQuery = useReadContract({
     address: escrow?.[3],
@@ -58,6 +67,24 @@ function Escrow() {
       enabled: Boolean(escrow?.[3] && isAddress(escrow[3])),
     },
   });
+
+  useEffect(() => {
+    if (!escrow) {
+      return;
+    }
+
+    const [buyer, seller, arbiter] = escrow;
+
+    if (buyer === "0x0000000000000000000000000000000000000000") {
+      return;
+    }
+
+    setEscrowParticipants({
+      buyer,
+      seller,
+      arbiter,
+    });
+  }, [escrow, setEscrowParticipants]);
 
   const handleEscrowUpdated = useCallback(() => {
     void escrowQuery.refetch();
@@ -165,9 +192,6 @@ function Escrow() {
   const formattedAmount = formatUnits(amount, decimals);
   const stateName = STATES[state] ?? "Unknown";
 
-  const isCurrentUserBuyer =
-    address !== undefined && address.toLowerCase() === buyer.toLowerCase();
-
   return (
     <section className="flex min-h-[calc(100svh-4.5rem)] items-center justify-center py-16">
       <div className="w-full max-w-2xl">
@@ -193,7 +217,6 @@ function Escrow() {
             amount={amount}
             symbol={symbol}
             formattedAmount={formattedAmount}
-            isCurrentUserBuyer={isCurrentUserBuyer}
             onEscrowUpdated={handleEscrowUpdated}
           />
         )}
@@ -201,8 +224,6 @@ function Escrow() {
         {state === 1 && (
           <EscrowFunded
             escrowId={escrowId}
-            seller={seller}
-            isCurrentUserBuyer={isCurrentUserBuyer}
             onEscrowUpdated={(transactionHash) => {
               if (transactionHash) {
                 setReleaseHash(transactionHash);
@@ -230,22 +251,30 @@ function Escrow() {
           />
         )}
 
-        {state === 3 && releaseHash && (
-          <EscrowCompleted
+        {state === 3 && (
+          <EscrowResult
+            title="Escrow Completed"
+            description="The funds have been successfully released to the seller."
             escrowId={escrowId}
-            seller={seller}
+            resultLabel="Released"
             amount={formattedAmount}
             symbol={symbol}
-            releaseHash={releaseHash}
+            counterpartyLabel="Seller"
+            counterparty={seller}
+            transactionHash={releaseHash ?? undefined}
           />
         )}
 
         {state === 4 && (
-          <EscrowRefunded
+          <EscrowResult
+            title="Escrow Refunded"
+            description="The dispute was resolved in favor of the buyer. The escrow funds have been returned to the buyer."
             escrowId={escrowId}
-            buyer={buyer}
+            resultLabel="Refunded"
             amount={formattedAmount}
             symbol={symbol}
+            counterpartyLabel="Buyer"
+            counterparty={buyer}
           />
         )}
       </div>

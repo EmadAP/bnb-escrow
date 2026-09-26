@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import {
+  useAccount,
   useReadContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from "wagmi";
 
 import { Button } from "@/components/ui/button";
+import { useAppStore } from "@/stores/app-store";
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
 import { erc20Abi } from "@/lib/contracts/erc20";
 
@@ -16,7 +18,6 @@ type EscrowCreatedProps = {
   amount: bigint;
   symbol: string;
   formattedAmount: string;
-  isCurrentUserBuyer: boolean;
   onEscrowUpdated: () => void;
 };
 
@@ -27,14 +28,22 @@ function EscrowCreated({
   amount,
   symbol,
   formattedAmount,
-  isCurrentUserBuyer,
   onEscrowUpdated,
 }: EscrowCreatedProps) {
+  const { address } = useAccount();
+
+  const getEscrowRole = useAppStore((state) => state.getEscrowRole);
+
+  const escrowRole = getEscrowRole(address);
+
   const allowanceQuery = useReadContract({
     address: token,
     abi: erc20Abi,
     functionName: "allowance",
     args: [buyer as `0x${string}`, ESCROW_ADDRESS],
+    query: {
+      enabled: escrowRole === "buyer",
+    },
   });
 
   const {
@@ -85,7 +94,7 @@ function EscrowCreated({
     onEscrowUpdated();
   }, [isDepositConfirmed, onEscrowUpdated]);
 
-  if (!isCurrentUserBuyer) {
+  if (escrowRole !== "buyer") {
     return (
       <div className="border-t pt-6">
         <p className="text-sm text-muted-foreground">

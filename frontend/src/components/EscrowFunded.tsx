@@ -6,33 +6,21 @@ import {
 } from "wagmi";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useAppStore } from "@/stores/app-store";
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
+import EscrowActionDialog from "./EscrowActionDialog";
 
 type EscrowFundedProps = {
   escrowId: string;
-  seller: string;
-  isCurrentUserBuyer: boolean;
   onEscrowUpdated: (transactionHash?: `0x${string}`) => void;
 };
 
-function EscrowFunded({
-  escrowId,
-  isCurrentUserBuyer,
-  onEscrowUpdated,
-  seller,
-}: EscrowFundedProps) {
+function EscrowFunded({ escrowId, onEscrowUpdated }: EscrowFundedProps) {
   const [isDisputeDialogOpen, setIsDisputeDialogOpen] = useState(false);
 
   const { address } = useAccount();
+
+  const escrowRole = useAppStore((state) => state.getEscrowRole(address));
 
   const {
     writeContract: release,
@@ -106,8 +94,8 @@ function EscrowFunded({
     });
   }
 
-  const isCurrentUserSeller =
-    address !== undefined && address.toLowerCase() === seller.toLowerCase();
+  const isBuyer = escrowRole === "buyer";
+  const isParty = escrowRole === "buyer" || escrowRole === "seller";
 
   const isReleaseProcessing =
     isReleasing || isConfirmingRelease || isReleaseConfirmed;
@@ -127,7 +115,7 @@ function EscrowFunded({
       </p>
 
       <div className="flex flex-col gap-4 md:flex-row">
-        {isCurrentUserBuyer && (
+        {isBuyer && (
           <Button
             className="flex-1"
             size="lg"
@@ -144,60 +132,34 @@ function EscrowFunded({
           </Button>
         )}
 
-        {(isCurrentUserBuyer || isCurrentUserSeller) && (
-          <Dialog
+        {isParty && (
+          <EscrowActionDialog
             open={isDisputeDialogOpen}
             onOpenChange={setIsDisputeDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button
-                className="flex-1"
-                size="lg"
-                variant="outline"
-                disabled={isReleaseProcessing || isDisputeProcessing}
-              >
-                {isOpeningDispute
-                  ? "Confirm dispute..."
-                  : isConfirmingDispute
-                    ? "Waiting for confirmation..."
-                    : isDisputeConfirmed
-                      ? "Dispute opened"
-                      : "Open Dispute"}
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Open dispute?</DialogTitle>
-
-                <DialogDescription>
-                  This will move the escrow into dispute. The funds will remain
-                  locked until the arbiter resolves the dispute.
-                </DialogDescription>
-              </DialogHeader>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDisputeDialogOpen(false)}
-                  disabled={isDisputeProcessing}
-                >
-                  Cancel
-                </Button>
-
-                <Button
-                  onClick={handleOpenDispute}
-                  disabled={isDisputeProcessing}
-                >
-                  {isOpeningDispute
-                    ? "Confirm transaction..."
-                    : isConfirmingDispute
-                      ? "Waiting for confirmation..."
-                      : "Open Dispute"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            triggerLabel="Open Dispute"
+            triggerProcessingLabel={
+              isOpeningDispute
+                ? "Confirm dispute..."
+                : isConfirmingDispute
+                  ? "Waiting for confirmation..."
+                  : isDisputeConfirmed
+                    ? "Dispute opened"
+                    : "Open Dispute"
+            }
+            triggerVariant="outline"
+            title="Open dispute?"
+            description="This will move the escrow into dispute. The funds will remain locked until the arbiter resolves the dispute."
+            confirmLabel="Open Dispute"
+            confirmProcessingLabel={
+              isOpeningDispute
+                ? "Confirm transaction..."
+                : isConfirmingDispute
+                  ? "Waiting for confirmation..."
+                  : "Open Dispute"
+            }
+            isProcessing={isDisputeProcessing}
+            onConfirm={handleOpenDispute}
+          />
         )}
       </div>
 

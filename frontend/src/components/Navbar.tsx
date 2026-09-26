@@ -48,7 +48,6 @@ function Navbar() {
 
   function handleDisconnect() {
     disconnect();
-    reset();
   }
 
   return (

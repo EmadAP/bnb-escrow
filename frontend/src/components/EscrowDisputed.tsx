@@ -10,23 +10,18 @@ import { ShieldAlert } from "lucide-react";
 import { useAppStore } from "@/stores/app-store";
 import { ESCROW_ADDRESS, escrowAbi } from "@/lib/contracts/escrow";
 import EscrowActionDialog from "./EscrowActionDialog";
+import { Button } from "./ui/button";
 
 type EscrowDisputedProps = {
   escrowId: string;
-  arbiter: string;
   amount: bigint;
   decimals: number;
   symbol: string;
   onEscrowUpdated: (transactionHash?: `0x${string}`) => void;
 };
 
-function shortenAddress(address: string) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
 function EscrowDisputed({
   escrowId,
-  arbiter,
   amount,
   decimals,
   symbol,
@@ -38,6 +33,8 @@ function EscrowDisputed({
   const { address } = useAccount();
 
   const escrowRole = useAppStore((state) => state.getEscrowRole(address));
+  const setView = useAppStore((state) => state.setView);
+
   const {
     writeContract: releaseToSeller,
     data: sellerResolutionHash,
@@ -133,48 +130,20 @@ function EscrowDisputed({
   const buyerResolutionFailed = buyerResolutionError || isBuyerResolutionFailed;
 
   return (
-    <div className="flex flex-col items-center text-center">
-      <ShieldAlert className="size-12 text-amber-500" />
+    <div className="space-y-4 pt-6">
+      <div className="flex items-center gap-3">
+        <ShieldAlert className="size-6 text-amber-500" />
 
-      <h3 className="mt-4 text-xl font-semibold">Dispute in Progress</h3>
+        <h3 className="font-semibold">Dispute in Progress</h3>
+      </div>
 
-      <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+      <p className="text-sm leading-6 text-muted-foreground">
         This escrow has been disputed. The funds remain locked until the
         assigned arbiter resolves the dispute.
       </p>
 
-      <div className="mt-6 w-full border bg-card p-4 text-left">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">Escrow</span>
-
-          <span className="text-sm font-medium">#{escrowId}</span>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">Status</span>
-
-          <span className="border border-amber-500 px-2 py-0.5 text-xs text-amber-600">
-            Disputed
-          </span>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">Arbiter</span>
-
-          <span className="font-mono text-sm">{shortenAddress(arbiter)}</span>
-        </div>
-
-        <div className="mt-3 flex items-center justify-between gap-4">
-          <span className="text-sm text-muted-foreground">Amount</span>
-
-          <span className="text-sm font-medium">
-            {formattedAmount} {symbol}
-          </span>
-        </div>
-      </div>
-
       {escrowRole === "arbiter" ? (
-        <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row">
+        <div className="flex flex-col gap-4 md:flex-row">
           <EscrowActionDialog
             open={isSellerDialogOpen}
             onOpenChange={setIsSellerDialogOpen}
@@ -188,6 +157,7 @@ function EscrowDisputed({
                     ? "Released to Seller"
                     : "Release to Seller"
             }
+            triggerVariant="outline"
             title="Release funds to seller?"
             description="The escrow amount will be transferred to the seller. This decision will resolve the dispute and cannot be reversed."
             amount={formattedAmount}
@@ -235,20 +205,29 @@ function EscrowDisputed({
           />
         </div>
       ) : (
-        <p className="mt-6 text-sm text-muted-foreground">
-          Waiting for the arbiter to resolve the dispute.
-        </p>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Waiting for the arbiter to resolve the dispute.
+          </p>
+          <Button
+            className="mt-4 w-full"
+            variant="default"
+            onClick={() => setView("home")}
+          >
+            Back to Home
+          </Button>
+        </div>
       )}
 
       {sellerResolutionFailed && !isSellerResolutionConfirmed && (
-        <p className="mt-3 text-sm text-destructive">
+        <p className="text-sm text-destructive">
           Releasing the funds to the seller failed or was rejected. Please try
           again.
         </p>
       )}
 
       {buyerResolutionFailed && !isBuyerResolutionConfirmed && (
-        <p className="mt-3 text-sm text-destructive">
+        <p className="text-sm text-destructive">
           Refunding the buyer failed or was rejected. Please try again.
         </p>
       )}

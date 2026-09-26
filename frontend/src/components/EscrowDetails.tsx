@@ -16,6 +16,28 @@ function shortenAddress(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function getStatusClassName(stateName: string) {
+  switch (stateName) {
+    case "Created":
+      return "border-primary text-primary";
+
+    case "Funded":
+      return "border-blue-600 text-blue-600";
+
+    case "Disputed":
+      return "border-amber-600 text-amber-600";
+
+    case "Completed":
+      return "border-green-600 text-green-600";
+
+    case "Refunded":
+      return "border-green-600 text-green-600";
+
+    default:
+      return "border-primary text-primary";
+  }
+}
+
 function EscrowDetails({
   buyer,
   seller,
@@ -38,11 +60,14 @@ function EscrowDetails({
           Escrow Details
         </h2>
       </div>
+
       <div className="space-y-4 border bg-card p-6">
         <div className="flex items-center justify-between border-b pb-4">
           <span className="text-muted-foreground">Status</span>
 
-          <span className="border border-primary px-2 py-0.5 text-xs text-primary">
+          <span
+            className={`border px-2 py-0.5 text-xs ${getStatusClassName(stateName)}`}
+          >
             {stateName}
           </span>
         </div>

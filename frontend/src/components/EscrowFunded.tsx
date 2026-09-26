@@ -21,6 +21,7 @@ function EscrowFunded({ escrowId, onEscrowUpdated }: EscrowFundedProps) {
   const { address } = useAccount();
 
   const escrowRole = useAppStore((state) => state.getEscrowRole(address));
+  const setView = useAppStore((state) => state.setView);
 
   const {
     writeContract: release,
@@ -105,8 +106,29 @@ function EscrowFunded({ escrowId, onEscrowUpdated }: EscrowFundedProps) {
 
   const disputeFailed = disputeError || isDisputeFailed;
 
+  if (!isParty) {
+    return (
+      <div className="pt-6">
+        <h3 className="font-semibold">Escrow is funded</h3>
+
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          The funds are held by the escrow contract. The buyer can release the
+          funds to the seller, or either party can open a dispute.
+        </p>
+
+        <Button
+          className="mt-4 w-full"
+          variant="default"
+          onClick={() => setView("home")}
+        >
+          Back to Home
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4 border-t pt-6">
+    <div className="space-y-4 pt-6">
       <h3 className="font-semibold">Escrow is funded</h3>
 
       <p className="text-sm leading-6 text-muted-foreground">

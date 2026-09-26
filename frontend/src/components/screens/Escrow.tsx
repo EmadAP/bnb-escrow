@@ -22,7 +22,9 @@ const STATES = [
 ] as const;
 
 function Escrow() {
-  const [releaseHash, setReleaseHash] = useState<`0x${string}` | null>(null);
+  const [resultTransactionHash, setResultTransactionHash] = useState<
+    `0x${string}` | null
+  >(null);
 
   const escrowId = useAppStore((state) => state.escrowId);
   const setView = useAppStore((state) => state.setView);
@@ -195,19 +197,17 @@ function Escrow() {
   return (
     <section className="flex min-h-[calc(100svh-4.5rem)] items-center justify-center py-16">
       <div className="w-full max-w-2xl">
-        {(state === 0 || state === 1) && (
-          <EscrowDetails
-            escrowId={escrowId}
-            buyer={buyer}
-            seller={seller}
-            arbiter={arbiter}
-            token={token}
-            amount={amount}
-            decimals={decimals}
-            symbol={symbol}
-            stateName={stateName}
-          />
-        )}
+        <EscrowDetails
+          escrowId={escrowId}
+          buyer={buyer}
+          seller={seller}
+          arbiter={arbiter}
+          token={token}
+          amount={amount}
+          decimals={decimals}
+          symbol={symbol}
+          stateName={stateName}
+        />
 
         {state === 0 && (
           <EscrowCreated
@@ -226,7 +226,7 @@ function Escrow() {
             escrowId={escrowId}
             onEscrowUpdated={(transactionHash) => {
               if (transactionHash) {
-                setReleaseHash(transactionHash);
+                setResultTransactionHash(transactionHash);
               }
 
               void escrowQuery.refetch();
@@ -237,13 +237,12 @@ function Escrow() {
         {state === 2 && (
           <EscrowDisputed
             escrowId={escrowId}
-            arbiter={arbiter}
             amount={amount}
             decimals={decimals}
             symbol={symbol}
             onEscrowUpdated={(transactionHash) => {
               if (transactionHash) {
-                setReleaseHash(transactionHash);
+                setResultTransactionHash(transactionHash);
               }
 
               void escrowQuery.refetch();
@@ -255,13 +254,7 @@ function Escrow() {
           <EscrowResult
             title="Escrow Completed"
             description="The funds have been successfully released to the seller."
-            escrowId={escrowId}
-            resultLabel="Released"
-            amount={formattedAmount}
-            symbol={symbol}
-            counterpartyLabel="Seller"
-            counterparty={seller}
-            transactionHash={releaseHash ?? undefined}
+            transactionHash={resultTransactionHash ?? undefined}
           />
         )}
 
@@ -269,12 +262,7 @@ function Escrow() {
           <EscrowResult
             title="Escrow Refunded"
             description="The dispute was resolved in favor of the buyer. The escrow funds have been returned to the buyer."
-            escrowId={escrowId}
-            resultLabel="Refunded"
-            amount={formattedAmount}
-            symbol={symbol}
-            counterpartyLabel="Buyer"
-            counterparty={buyer}
+            transactionHash={resultTransactionHash ?? undefined}
           />
         )}
       </div>

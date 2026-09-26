@@ -33,6 +33,7 @@ function EscrowCreated({
   const { address } = useAccount();
 
   const getEscrowRole = useAppStore((state) => state.getEscrowRole);
+  const setView = useAppStore((state) => state.setView);
 
   const escrowRole = getEscrowRole(address);
 
@@ -96,10 +97,20 @@ function EscrowCreated({
 
   if (escrowRole !== "buyer") {
     return (
-      <div className="border-t pt-6">
+      <div className="pt-6">
+        <h3 className="font-semibold">Escrow is created</h3>
+
         <p className="text-sm text-muted-foreground">
           Only the buyer can fund this escrow.
         </p>
+
+        <Button
+          className="mt-4 w-full"
+          variant="default"
+          onClick={() => setView("home")}
+        >
+          Back to Home
+        </Button>
       </div>
     );
   }
@@ -169,17 +180,17 @@ function EscrowCreated({
   const hasEnoughAllowance = allowance >= amount;
 
   return (
-    <div className="border-t pt-6">
+    <div className="space-y-4 pt-6">
       <h3 className="font-semibold">Fund this escrow</h3>
 
-      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+      <p className="text-sm leading-6 text-muted-foreground">
         Approve the escrow contract to spend your {symbol}, then deposit the
         funds into the escrow.
       </p>
 
       {!hasEnoughAllowance ? (
         <Button
-          className="mt-4 w-full"
+          className="w-full"
           size="lg"
           onClick={handleApprove}
           disabled={isApprovalProcessing || isDepositProcessing}
@@ -192,7 +203,7 @@ function EscrowCreated({
         </Button>
       ) : (
         <Button
-          className="mt-4 w-full"
+          className="w-full"
           size="lg"
           onClick={handleDeposit}
           disabled={isDepositProcessing}
@@ -206,13 +217,13 @@ function EscrowCreated({
       )}
 
       {approvalFailed && (
-        <p className="mt-3 text-sm text-destructive">
+        <p className="text-sm text-destructive">
           Approval failed. Please try again.
         </p>
       )}
 
       {depositFailed && (
-        <p className="mt-3 text-sm text-destructive">
+        <p className="text-sm text-destructive">
           Deposit failed. Please try again.
         </p>
       )}
